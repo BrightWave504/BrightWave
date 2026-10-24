@@ -1,0 +1,44 @@
+AD ASTRA HRIMS — SUPABASE LOGIN INTEGRATION
+==========================================
+
+WHAT CHANGED
+- Preserved existing BrightWave HTML/CSS layout and five dashboards.
+- Removed the "select any role / any password" login bypass.
+- Supabase verifies email and password.
+- Dashboard role is read from trusted Supabase app_metadata.hrims_role.
+- Signed-out users cannot open any of the five dashboard interfaces.
+- Portal-switching is disabled; sign out to use another account.
+- Existing HRIMS records are FICTIONAL and remain in browser localStorage.
+
+SETUP (in this order)
+1. In Supabase SQL Editor, run SUPABASE_SETUP.sql once. It assigns the
+   applicant role to new signups. This does NOT modify existing accounts.
+2. In Supabase Authentication > URL Configuration, set Site URL to your
+   EXACT live Netlify website URL (including https://). Add the same URL
+   to Redirect URLs. This is needed for email confirmation links.
+3. In Supabase Project Settings > API Keys, copy the PUBLISHABLE key
+   (sb_publishable_...). Do NOT copy the secret key.
+4. Open supabase-config.js and replace PASTE_YOUR_SB_PUBLISHABLE_KEY_HERE
+   with the publishable key. The Supabase project URL is prefilled.
+5. Upload the CONTENTS of ad_astra_hrims/ (index.html must be at site root)
+   to Netlify Drop, or commit the files to your connected deployment repo.
+6. Open the live site and sign in with the existing IT account
+   itdept@gmail.com and its password. The IT account has app_metadata
+   hrims_role = it based on your previous setup.
+7. For other roles, create accounts in Supabase Authentication > Users,
+   then use a trusted admin SQL query to set raw_app_meta_data.hrims_role
+   to one of employee, hr, supervisor, or it. Do not let users set this
+   themselves. Sign out and back in to refresh the role.
+
+SECURITY LIMITATIONS
+- This is an academic demonstration, NOT a production HR system.
+- Fictional records are stored in localStorage, not in Supabase; browser
+  data is not shared between users and is NOT a protected HR database.
+- Never put real employee data, identity documents, passwords or other
+  confidential records into the prototype.
+- The IT "Add account" and password reset screens still demonstrate
+  simulated local actions; they do NOT create Supabase accounts.
+- Real shared data and administrative functions need server-side checks,
+  RLS policies, and authenticated backend functions before deployment.
+- Never place sb_secret_ or service_role keys in HTML/JS.
+- The Supabase CDN must load (internet access required).

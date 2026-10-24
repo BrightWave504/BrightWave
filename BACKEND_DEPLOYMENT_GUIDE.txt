@@ -1,0 +1,59 @@
+AD ASTRA HRIMS — SUPABASE DATABASE & BACKEND SETUP
+=================================================
+This is a DEPLOYABLE package, not a deployment already performed. No Supabase credentials were available to run the remote setup.
+
+IMPORTANT SECURITY NOTES
+- Your requested passwords are demonstration-only and several are weak/reused. They are NOT embedded in website code or SQL. Change them before sharing publicly.
+- The exact supervisor1 password supplied was "supervisor @1" (including a space). The seed script preserves it exactly.
+- User passwords are never visible in the IT dashboard. IT can SET a new password, not read the existing one.
+- Only accounts that actually exist in Supabase can log in. Uploading the ZIP alone does NOT create users.
+- This update persists AUTH ACCOUNTS and ROLE PROFILES in Supabase. The HR records, job applications, documents, etc. still use fictional browser-local data. They are NOT yet shared database records.
+- No public registration option for Employee, HR, IT, or Supervisor. The only public sign-up is Applicant.
+
+STEP 1 — CREATE DATABASE
+1. Open your Supabase project -> SQL Editor -> New query.
+2. Paste supabase/HRIMS_DATABASE.sql and click Run.
+3. Confirm the table public.hrims_profiles exists in Table Editor.
+
+STEP 2 — CREATE THE 10 DEMO ACCOUNTS
+Option A (easiest, manual): Supabase -> Authentication -> Users -> Add user -> Create new user.
+Create each account with the email/password you requested. Use the SQL below for each created email to assign its role:
+UPDATE auth.users SET raw_app_meta_data = coalesce(raw_app_meta_data,'{}'::jsonb) || '{"hrims_role":"employee"}'::jsonb WHERE email='employee1@gmail.com';
+Change both the email and the role (applicant, employee, hr, it, supervisor) for each account.
+
+Option B (batch create with Node.js, local computer only):
+1. Install Node.js 20+.
+2. Open a terminal in the scripts folder; run: npm install
+3. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY as environment variables in your LOCAL terminal.
+   Windows PowerShell example (replace values; do not save/share secrets):
+   $env:SUPABASE_URL='https://YOUR_PROJECT.supabase.co'
+   $env:SUPABASE_SERVICE_ROLE_KEY='YOUR_SECRET_SERVICE_ROLE_KEY'
+   node seed-users.mjs
+4. The script SKIPS accounts already present and does not overwrite their passwords.
+5. Clear your terminal's sensitive environment variables after running.
+NEVER upload the service-role key to GitHub, Netlify, or any browser JavaScript.
+
+STEP 3 — DEPLOY SECURE IT ACCOUNT MANAGEMENT FUNCTION
+1. Install Supabase CLI and log in (https://supabase.com/docs/guides/local-development/cli/getting-started).
+2. In the ad_astra_hrims folder, run:
+   supabase login
+   supabase link --project-ref vjfrzgsrwIolvjzuqqqw
+   supabase functions deploy hrims-admin --no-verify-jwt
+3. The function checks the caller's Supabase Auth access token using auth.getUser() AND checks their IT role on the server. The --no-verify-jwt flag is needed for some publishable-key setups; it does not bypass the function's internal authorization checks.
+4. The function uses SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY from Supabase's server-side environment. Confirm these are available in your function environment.
+5. The IT dashboard can then list accounts, create users and set new passwords. It never exposes stored passwords.
+
+STEP 4 — CONNECT FRONT END
+1. Open supabase-config.js. Paste your Supabase PUBLISHABLE key into publishableKey.
+2. Never paste a secret or service-role key into that file.
+3. Supabase -> Authentication -> URL Configuration: set Site URL to your Netlify URL, and add its URL as an allowed redirect URL.
+4. Upload the CONTENTS of ad_astra_hrims/ to Netlify (index.html must be at site root), or commit to GitHub and deploy via Netlify Git integration.
+5. Open the site in a private browser window. Sign in as one of the demo users. Each account should be sent to its assigned dashboard.
+6. Sign in as an IT user -> User Account Management -> Refresh. The real Supabase accounts should appear.
+
+STEP 5 — BEFORE REAL DATA
+- Configure password reset through verified user email and require MFA for privileged users.
+- Restrict your Edge Function's CORS origins to your own site; add rate limiting, security audit logs and stronger administrative controls.
+- Set up separate RLS-protected tables for job applications, employees, documents, onboarding, and support tickets.
+- Do not upload real personal data while those modules are browser-local prototypes.
+- Because this is a static client-side app, dashboard display restrictions are UI-only. Real records must be protected by database RLS and server-side authorization.
