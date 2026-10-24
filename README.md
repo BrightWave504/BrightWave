@@ -1,2 +1,0 @@
-# BrightWave
-My personal website
